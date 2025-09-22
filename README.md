@@ -4,6 +4,25 @@
 
 ---
 
+## Table of Contents
+
+* Executive summary
+* Business questions & success criteria
+* Dataset
+* Methods
+
+  * Randomization check (EDA)
+  * Classical A/B tests
+  * Uplift modeling (T-learner RF)
+  * ROI simulation (top-k%)
+* Decisions & recommendations
+* Modeling roadmap (next steps)
+* Reproducibility
+* Assumptions & caveats
+* How to extend
+
+---
+
 ## Executive summary
 
 We analyze the Hillstrom 2008 e‑mail experiment to answer: **Should we send men’s and women’s marketing e‑mails, and to whom?** Using classical A/B tests plus an uplift model with ROI simulation, we find:
@@ -30,12 +49,16 @@ We analyze the Hillstrom 2008 e‑mail experiment to answer: **Should we send me
 
 ---
 
+---
+
 ## Business questions & success criteria
 
 * **Q1.** Do men’s/women’s e‑mails increase conversion and revenue vs. control?
   **Metric:** z‑tests on conversion; Welch’s *t* on spend; decide if *p* < 0.05 and lift is material.
 * **Q2.** Can we **selectively target** customers to improve profit?
   **Metric:** Uplift model quality (Qini AUC) and **simulated net profit** at various target rates *k*.
+
+---
 
 ---
 
@@ -48,6 +71,8 @@ The Hillstrom e‑mail dataset contains targets **visit**, **conversion**, **spe
 ```
 ['recency', 'history_segment', 'history', 'mens', 'womens', 'zip_code', 'newbie', 'channel', 'visit', 'conversion', 'spend', 'segment']
 ```
+
+---
 
 ---
 
@@ -120,6 +145,8 @@ Assuming **margin = \$15** per incremental conversion and **\$0.10** per e‑mai
 
 ---
 
+---
+
 ## Decisions & recommendations
 
 1. **Mens E‑Mail:** Strong global lift. **Mail the top \~10%** by uplift for higher profit vs. blanket sends; keep a **holdout cell** to measure true incrementality.
@@ -132,12 +159,16 @@ Assuming **margin = \$15** per incremental conversion and **\$0.10** per e‑mai
 
 ---
 
+---
+
 ## Modeling roadmap (next steps)
 
 * **Feature enrichment:** customer tenure, seasonal flags, category affinity, historical spend frequency/recency, interaction terms; reduce leakage.
 * **Algorithms:** X‑learner, DR‑learner, gradient boosting; tune trees/calibration; cross‑fitting.
 * **Evaluation:** more robust **Qini/UPLIFT\@K** with cross‑validation; **calibration plots**.
 * **Targeting policy search:** sweep *k* more finely (e.g., 5–25% in 1% steps) to maximize expected profit.
+
+---
 
 ---
 
@@ -165,6 +196,8 @@ python main.py
 
 ---
 
+---
+
 ## Assumptions & caveats
 
 * ROI uses fixed **margin = \$15** and **cost/email = \$0.10**; adjust to your business (consider contribution margin, returns, and variable costs).
@@ -172,3 +205,11 @@ python main.py
 * All statistics reported here derive from the **same data split** used in `main.py`; for production, use **out‑of‑time validation** and **separate test markets**.
 
 ---
+
+---
+
+## How to extend
+
+* Add richer covariates and re‑run `main.py`.
+* Replace RF with gradient boosting and re‑evaluate Qini/ROI.
+* Add a notebook with **plots of Qini curves** and **profit vs. k** for stakeholder presentations.
