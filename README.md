@@ -23,6 +23,73 @@
 
 ---
 
+## Proposal
+
+### Objective
+
+Optimize the e‑mail targeting policy for **Mens E‑Mail** and **Womens E‑Mail** relative to **No E‑Mail (control)** to **maximize incremental profit** while protecting customer experience (deliverability, complaints, unsubscribes).
+
+### Scope & hypotheses
+
+* **H1:** Mens campaign increases conversion and average spend vs. control.
+* **H2:** Womens campaign increases conversion and average spend vs. control.
+* **H3:** A **selective, uplift‑ranked policy** (mail top‑*k*%) **outperforms mail‑all** on net profit.
+
+### Data & economic assumptions
+
+* **Dataset:** Hillstrom (2008) with fields:
+  `recency, history_segment, history, mens, womens, zip_code, newbie, channel, visit, conversion, spend, segment`.
+* **Unit economics (configurable in `roi.py`):** **\$0.10/email** send cost; **\$15 contribution margin per incremental conversion**.
+
+  > Run sensitivity analysis with your own margin/costs before deployment.
+
+### Methodology
+
+1. **Randomization check** — Validate balance of pre‑treatment covariates (e.g., `history`, `recency`) across treatment arms.
+2. **Classical A/B tests** — Two‑proportion **z‑tests** for conversion; **Welch’s t‑test** with **5,000 bootstrap** resamples for spend differences.
+3. **Uplift modeling** — **T‑learner** with calibrated Random Forests; evaluate **Qini curve/AUC** and **uplift\@k** on a hold‑out split.
+4. **Policy search & ROI** — Rank customers by predicted uplift and simulate **net profit** at *k* ∈ {5%, 10%, 20%, 30%, 100%}.
+5. **Visualization** — Plot **Qini curve vs. k** and save to `./figures/` (e.g., `figures/qini_mens_e-mail_vs_no_e-mail.png`, `figures/qini_womens_e-mail_vs_no_e-mail.png`).
+
+### Results (current run)
+
+* **Conversion lift**
+
+  * Mens vs Control: z = **7.385**, *p* ≈ **1.52e‑13**; rates **1.253% vs 0.573%**; **+0.681 pp** (≈ **+118.8%** rel.).
+  * Womens vs Control: z = **3.780**, *p* ≈ **1.57e‑4**; rates **0.884% vs 0.573%**; **+0.311 pp** (≈ **+54.3%** rel.).
+  * Mens vs Womens: z = **3.713**, *p* ≈ **2.05e‑4**; **+0.369 pp** (≈ **+41.8%** rel.) favoring Mens.
+* **Spend lift (per customer)**
+
+  * Mens vs Control: *t* = **5.300**, *p* ≈ **1.16e‑7**; **+\$0.770** (95% CI **\[+\$0.479, +\$1.049]**).
+  * Womens vs Control: *t* = **3.256**, *p* ≈ **0.00113**; **+\$0.424** (95% CI **\[+\$0.159, +\$0.684]**).
+* **Uplift quality**
+
+  * Mens vs Control: **Qini AUC = −0.142** (underperforms random in this split).
+  * Womens vs Control: **Qini AUC = +0.094** (modest positive signal).
+* **ROI (top‑*k* policy)**
+
+  * **Mens:** Top 10% → **+\$27.72** net; mailing **all** → **+\$11.60**.
+  * **Womens:** Generally **negative**; **top 5% ≈ break‑even** (−\$0.03).
+
+### Recommendation & rollout
+
+* **Mens E‑Mail:** Deploy a **top‑\~10% uplift policy** with a persistent **control/holdout** to measure incrementality; monitor deliverability and unsubscribe.
+* **Womens E‑Mail:** **Pause** or **restrict to top 5%** while improving features, calibration, and economics via sensitivity tests.
+* **Experiment design:** Run a **multicell test** (Mens: top‑10% vs all vs control; Womens: top‑5% vs all vs control).
+  **Primary KPI:** incremental profit; **guardrails:** complaint rate, unsubscribe, deliverability.
+
+### Deliverables
+
+* Reproducible pipeline (`main.py`) generating statistical tables, **Qini plots**, and ROI tables.
+* PNGs under `./figures/` with Qini curves vs. k.
+* One‑page business summary comparing **uplift policy vs mail‑all**.
+
+### Success criteria
+
+* **Qini AUC > 0** on hold‑out; **incremental profit > mail‑all** at chosen *k*; stable results in follow‑up split tests.
+
+---
+
 ## Executive summary
 
 We analyze the Hillstrom 2008 e‑mail experiment to answer: **Should we send men’s and women’s marketing e‑mails, and to whom?** Using classical A/B tests plus an uplift model with ROI simulation, we find:
