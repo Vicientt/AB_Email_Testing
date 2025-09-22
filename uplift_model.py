@@ -220,3 +220,44 @@ def uplift_at_k(y_true: np.ndarray, treatment: np.ndarray, uplift_scores: np.nda
     if mask_t.sum() == 0 or mask_c.sum() == 0:
         return 0.0
     return y_top[mask_t].mean() - y_top[mask_c].mean()
+
+from pathlib import Path
+import matplotlib.pyplot as plt
+
+def plot_qini_vs_k(y_true, uplift_scores, treatment, title=None, save_path=None, show=False):
+    """
+    Plot Qini curve (cumulative uplift) vs. k (% of population targeted).
+    - y_true: 1/0 conversion outcomes (numpy array or pd.Series)
+    - uplift_scores: predicted uplift for each row
+    - treatment: 1/0 treatment assignment
+    """
+    y_true = np.asarray(y_true)
+    uplift_scores = np.asarray(uplift_scores)
+    treatment = np.asarray(treatment)
+
+    # 1) Qini curve
+    phi, qini = qini_curve(y_true, uplift_scores, treatment)  # phi in [0,1]
+    k_pct = phi * 100.0
+
+    # 2) Random baseline (expected incremental under random ranking)
+    p_t = y_true[treatment == 1].mean()
+    p_c = y_true[treatment == 0].mean()
+    delta = p_t - p_c
+    qini_random = delta * phi
+
+    # 3) Plot
+    plt.figure()
+    plt.plot(k_pct, qini, label="Model")
+    plt.plot(k_pct, qini_random, linestyle="--", label="Random baseline")
+    plt.xlabel("k (% of customers targeted)")
+    plt.ylabel("Qini (cumulative uplift)")
+    if title:
+        plt.title(title)
+    plt.legend()
+
+    if save_path:
+        Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(save_path, dpi=150, bbox_inches="tight")
+    if show:
+        plt.show()
+    plt.close()

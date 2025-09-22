@@ -6,6 +6,7 @@ from eda import check_randomization
 from ab_test import ab_test_proportion, ab_test_spend
 from uplift_model import train_uplift_tlearner, qini_curve, qini_auc
 from roi import simulate_roi
+from uplift_model import plot_qini_vs_k
 
 def run_ab_tests(df: pd.DataFrame):
     # Conversion z-tests
@@ -47,6 +48,17 @@ def run_uplift_and_roi(df: pd.DataFrame, treat_label: str, control_label: str):
     phi, qini = qini_curve(res["y_true"].values, res["uplift_pred"].values, res["treatment"].values)
     qini_auc_val = qini_auc(phi, qini, res["treatment"].values, res["y_true"].values)
     print(f"\nQini AUC ({treat_label} vs {control_label}):", qini_auc_val)
+    
+    # Draw Qini Curve
+    plot_path = f"figures/qini_{treat_label.replace(' ','_').lower()}_vs_{control_label.replace(' ','_').lower()}.png"
+    plot_qini_vs_k(
+    res["y_true"].values,
+    res["uplift_pred"].values,
+    res["treatment"].values,
+    title=f"Qini Curve: {treat_label} vs {control_label} (AUC={qini_auc_val:.3f})",
+    save_path=plot_path,
+    )
+    print("Saved Qini curve to:", plot_path)
 
     # ROI mô phỏng cho các k
     ks = [0.05, 0.10, 0.20, 0.30, 1.00]
